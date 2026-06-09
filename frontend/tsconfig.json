@@ -1,0 +1,17 @@
+{
+	"compilerOptions": {
+		"target": "ES2024",
+		"module": "ESNext",
+		"moduleResolution": "Bundler",
+		"strict": true,
+		"experimentalDecorators": false,
+		"useDefineForClassFields": true,
+		"skipLibCheck": true,
+		"noEmit": true,
+		"isolatedModules": true,
+		"verbatimModuleSyntax": true,
+		"lib": ["ESNext", "DOM", "DOM.Iterable"],
+		"types": []
+	},
+	"include": ["auto-import.d.ts", "src/**/*.ts"]
+}
