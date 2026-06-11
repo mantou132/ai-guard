@@ -1,53 +1,117 @@
+import type { ContextMenuItem } from 'duoyun-ui/elements/contextmenu';
+import { Modal } from 'duoyun-ui/elements/modal';
+import { theme } from 'duoyun-ui/lib/theme';
+import { Time } from 'duoyun-ui/lib/time';
+import { polling } from 'duoyun-ui/lib/timer';
+import type { PatTableColumn } from 'duoyun-ui/patterns/table';
+import { listReports } from '../api';
+import { auditStatusList, riskLevelList } from '../enums';
 import { type AuditReport, appStore } from '../store';
-import { formatTime, toneForRisk } from '../utils';
+import { toneForRisk } from '../utils';
 
-@customElement('report-panel')
+@customElement('ai-guard-report-panel')
 @connectStore(appStore)
 class ReportPanelElement extends GemElement {
+  @mounted()
+  #mounted = () => {
+    return polling(async () => {
+      appStore({ reports: await listReports() });
+    }, 10_000);
+  };
+
+  #columns: PatTableColumn<AuditReport>[] = [
+    {
+      title: 'Time',
+      width: '12em',
+      render: (report) => new Time(report.created_at).format(),
+      sortable: true,
+      filterOptions: {
+        field: 'created_at',
+        type: 'date-time',
+        getCompareValue: (report) => new Date(report.created_at).getTime(),
+      },
+    },
+    {
+      title: 'Risk',
+      width: '9em',
+      render: (report) => html`
+        <dy-tag small color=${tagColor(toneForRisk(report.risk_level))}>${report.risk_level}</dy-tag>
+      `,
+      filterOptions: {
+        field: 'risk_level',
+        type: 'enum',
+        getOptions: () => riskLevelList,
+      },
+    },
+    {
+      title: 'Status',
+      dataIndex: 'status',
+      width: '9em',
+      filterOptions: {
+        type: 'enum',
+        getOptions: () => auditStatusList,
+      },
+    },
+    {
+      title: 'Title',
+      dataIndex: 'title',
+      width: '24em',
+      ellipsis: true,
+      render: (report) => html`
+        <strong>${report.title}</strong>
+        ${report.error ? muted(report.error, theme.negativeColor) : null}
+      `,
+      filterOptions: {
+        getSearchText: (report) => `${report.title} ${report.error || ''}`,
+      },
+    },
+    {
+      title: 'Findings',
+      dataIndex: 'findings',
+      width: '10em',
+      visibleWidth: 'auto',
+      render: (report) => String(report.findings.length),
+      filterOptions: {
+        getSearchText: (report) => report.findings.join(' '),
+      },
+    },
+  ];
+
+  #getActions = (report: AuditReport): ContextMenuItem[] => [
+    {
+      text: 'View report',
+      handle: () => this.#openReport(report),
+    },
+  ];
+
+  #openReport = (report: AuditReport) => {
+    Modal.open({
+      header: report.title || 'Security Report',
+      body: html`<ai-guard-report-detail .report=${report}></ai-guard-report-detail>`,
+      disableDefaultOKBtn: true,
+    }).catch(() => undefined);
+  };
+
   @template()
   #template = () => html`
-    <section class="rounded-lg border border-line bg-panel p-4 overflow-auto">
-      <table class="w-full min-w-[780px] border-collapse text-sm">
-        <thead>
-          <tr class="bg-slate-50 text-slate-500">
-            <th class=${thClass}>Time</th>
-            <th class=${thClass}>Risk</th>
-            <th class=${thClass}>Status</th>
-            <th class=${thClass}>Title</th>
-            <th class=${thClass}>Findings</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${appStore.reports.map((report) => this.#renderReport(report))}
-        </tbody>
-      </table>
-    </section>
-  `;
-
-  #renderReport = (report: AuditReport) => html`
-    <tr>
-      <td class=${tdClass}>${formatTime(report.created_at)}</td>
-      <td class=${tdClass}><span class=${badgeClass(toneForRisk(report.risk_level))}>${report.risk_level}</span></td>
-      <td class=${tdClass}>${report.status}</td>
-      <td class=${tdClass}>
-        <strong>${report.title}</strong>
-        ${report.error ? html`<div class="text-red-700">${report.error}</div>` : null}
-      </td>
-      <td class=${tdClass}>${report.findings.length ? report.findings.join('; ') : '-'}</td>
-    </tr>
+    <ai-guard-header .subTitle=${`Async review results from the configured OpenRouter audit model.`}></ai-guard-header>
+    <dy-pat-table
+      filterable
+      .rowKey=${'id'}
+      .data=${appStore.reports}
+      .columns=${this.#columns}
+      .getActions=${this.#getActions}
+    ></dy-pat-table>
   `;
 }
 
-const thClass = 'p-3 text-left align-top border-b border-slate-100 font-semibold';
-const tdClass = 'p-3 text-left align-top border-b border-slate-100';
-
-function badgeClass(tone: string) {
-  return `inline-flex min-h-5 items-center rounded-full px-2 text-xs font-semibold ${toneClass(tone)}`;
+function tagColor(tone: string) {
+  if (tone === 'danger') return 'negative';
+  if (tone === 'warn') return 'notice';
+  if (tone === 'ok') return 'positive';
+  return 'informative';
 }
 
-function toneClass(tone: string) {
-  if (tone === 'danger') return 'bg-red-100 text-red-800';
-  if (tone === 'warn') return 'bg-orange-100 text-orange-800';
-  if (tone === 'ok') return 'bg-green-100 text-green-800';
-  return 'bg-blue-100 text-blue-800';
+function muted(text: string, color = theme.describeColor) {
+  return html`<div style=${styleMap({ color, marginTop: '0.2em', overflowWrap: 'anywhere' })}>${text}</div>`;
 }

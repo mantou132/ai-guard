@@ -22,13 +22,13 @@
 
 - `src/`：Rust 后端，包含管理 API、账号路由、代理、审查、临时持久化和内嵌静态资源服务
 - `frontend/`：Gem + duoyun-ui 前端，Rspack 构建
-- `frontend/src/main.ts`：前端入口，只导入根元素
-- `frontend/src/elements/`：Gem 元素模块
+- `frontend/src/main.ts`：前端入口，导入根元素；HTML 根标签为 `<ai-guard-app>`
+- `frontend/src/elements/`：Gem 元素模块，本项目自定义元素统一使用 `ai-guard-*` 前缀
 - `frontend/src/api.ts`：前端请求封装
 - `frontend/src/store.ts`：前端全局状态
 - `frontend/src/utils.ts`：格式化、输入读取等纯工具
 - `frontend/src/main.css`：Tailwind CSS v4 全局样式入口
-- `frontend/public/`：Rspack HTML 模板
+- `frontend/public/`：Rspack HTML 模板和公开静态资源；图标放在 `frontend/public/icons/`
 - `frontend/dist/`：前端构建产物，同时是 `rust-embed` 的内嵌目录
 
 ## 关键文件
@@ -44,17 +44,18 @@
 - `src/assets.rs`：前端资源内嵌和 SPA fallback
 - `frontend/rspack.config.mjs`：Rspack dev/build 配置、dev server 代理、`swc-plugin-gem` 自动导入
 - `frontend/auto-import.d.ts`：`swc-plugin-gem` 生成的自动导入类型声明
-- `frontend/src/elements/app-root.ts`：应用外壳和 tab 路由
-- `frontend/src/elements/account-panel.ts`：账号管理面板
-- `frontend/src/elements/log-panel.ts`：日志面板
-- `frontend/src/elements/report-panel.ts`：审查报告面板
-- `frontend/src/elements/dashboard-actions.ts`：前端面板共享异步动作
+- `frontend/src/elements/app.ts`：应用外壳，基于 `duoyun-ui/patterns/console` 定义路由、侧边栏
+- `frontend/src/elements/toolbar.ts`：当前路由标题栏
+- `frontend/src/elements/account-panel.ts`：账号管理面板，使用 `dy-pat-table` 和 `createForm` 弹窗
+- `frontend/src/elements/log-panel.ts`：日志面板，使用 `dy-pat-table` 和详情弹窗
+- `frontend/src/elements/report-panel.ts`：审查报告面板，使用 `dy-pat-table` 和报告详情弹窗
+- `frontend/src/elements/actions.ts`：前端面板共享异步动作
 
 ## 常用命令
 
 - 安装前端依赖：`pnpm --dir frontend install`
 - 前端开发服务：`pnpm --dir frontend run dev`
-- 前端类型检查：`pnpm --dir frontend run typecheck`
+- 前端类型检查：`pnpm --dir frontend run lint`
 - 前端生产构建：`pnpm --dir frontend run build`
 - Rust 检查：`cargo check`
 - Rust 格式化检查：`cargo fmt -- --check`
@@ -82,7 +83,7 @@
 
 # 前端开发
 
-使用 [`@mantou/gem`](https://gemjs.org/) 框架，[`duoyun-ui`](https://duoyun-ui.gemjs.org/) UI 库。Rspack 通过 `swc-plugin-gem` 自动导入 Gem 成员和模板内使用到的 `duoyun-ui` 元素；需要让 `auto-import.d.ts` 保持存在，删除后会在下一次构建时重新生成。样式使用 Tailwind CSS v4，从 `src/main.css` 入口导入；如果以后确实需要 Shadow DOM，再把该元素私有样式写在相应元素文件开头。请求封装优先使用 `@mantou/gem/helper/request`，全站未捕获错误由 `duoyun-ui/helper/error` 处理。
+使用 [`@mantou/gem`](https://gemjs.org/) 框架，[`duoyun-ui`](https://duoyun-ui.gemjs.org/) UI 库。页面外壳参考 gem examples console，优先使用 `dy-pat-console`、`dy-pat-table`、`createForm` 等 duoyun-ui pattern，不手写基础表格和弹窗。Rspack 通过 `swc-plugin-gem` 自动导入 Gem 成员、模板内使用到的 `duoyun-ui` 元素和 `ai-guard-*` 本地元素；本地元素文件名按去掉 `ai-guard-` 前缀后的元素名命名，例如 `ai-guard-log-panel` 对应 `frontend/src/elements/log-panel.ts`。需要让 `auto-import.d.ts` 保持存在，删除后会在下一次构建时重新生成。样式使用 Tailwind CSS v4，从 `src/main.css` 入口导入；如果以后确实需要 Shadow DOM，再把该元素私有样式写在相应元素文件开头。请求封装优先使用 `@mantou/gem/helper/request`，全站未捕获错误由 `duoyun-ui/helper/error` 处理。
 
 ## Gem Element Development
 

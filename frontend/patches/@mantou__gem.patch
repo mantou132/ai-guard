@@ -1,0 +1,12 @@
+diff --git a/helper/request.js b/helper/request.js
+index 6f3a6dc9d5a08f0fdbaa1bae523cf76999504037..9c8b82dd5a46025cd969ac9b20b77080d4e43e36 100644
+--- a/helper/request.js
++++ b/helper/request.js
+@@ -49,6 +49,7 @@ function initRequest(options = {}) {
+             throw new Error(res.statusText);
+         const contentType = req.headers.get('content-type');
+         const isClientError = res.status >= 400;
++        if (res.status === 204) return;
+         try {
+             let data;
+             if (contentType.includes('json')) {

@@ -6,6 +6,9 @@ const dirname = path.dirname(fileURLToPath(import.meta.url));
 const isDev = process.env.NODE_ENV !== 'production';
 
 export default {
+  infrastructureLogging: {
+    level: 'error',
+  },
   mode: isDev ? 'development' : 'production',
   target: ['web', 'es2024'],
   entry: {
@@ -19,6 +22,9 @@ export default {
     clean: true,
   },
   resolve: {
+    alias: {
+      '@': path.resolve(dirname, 'src'),
+    },
     extensions: ['.ts', '.js'],
   },
   module: {
@@ -64,9 +70,15 @@ export default {
                       'swc-plugin-gem',
                       {
                         styleMinify: true,
+                        // hmr: true,
                         selectorCompatible: true,
                         autoImport: {
                           extends: 'gem',
+                          elements: {
+                            '@': {
+                              'ai-guard-(.*)': '/elements/$1',
+                            },
+                          },
                         },
                         autoImportDts: 'auto-import.d.ts',
                       },
@@ -84,18 +96,26 @@ export default {
     new rspack.HtmlRspackPlugin({
       template: './public/index.html',
     }),
+    new rspack.CopyRspackPlugin({
+      patterns: [
+        {
+          from: path.resolve(dirname, 'public/icons'),
+          to: 'icons',
+        },
+      ],
+    }),
     new rspack.CssExtractRspackPlugin({
       filename: 'assets/[name].[contenthash:8].css',
     }),
   ],
   devServer: {
-    host: '127.0.0.1',
+    host: '0.0.0.0',
     port: 5173,
     hot: true,
     historyApiFallback: true,
     proxy: [
       {
-        context: ['/api', '/v1', '/openai', '/anthropic'],
+        context: ['/api'],
         target: 'http://127.0.0.1:8787',
         changeOrigin: true,
       },

@@ -5,13 +5,14 @@
   "scripts": {
     "dev": "rspack serve --config rspack.config.mjs --mode development",
     "build": "rspack build --config rspack.config.mjs --mode production",
-    "typecheck": "tsc --noEmit"
+    "lint": "biome check --write && tsc --noEmit"
   },
   "dependencies": {
     "@mantou/gem": "^2.2.4",
     "duoyun-ui": "^2.2.2"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.4.16",
     "@rspack/cli": "^2.0.6",
     "@rspack/core": "^2.0.6",
     "@rspack/dev-server": "^2.0.3",
@@ -21,5 +22,10 @@
     "tailwindcss": "^4.3.0",
     "typescript": "^5.8.3"
   },
-  "packageManager": "pnpm@9.10.0+sha512.73a29afa36a0d092ece5271de5177ecbf8318d454ecd701343131b8ebc0c1a91c487da46ab77c8e596d6acf1461e3594ced4becedf8921b074fbd8653ed7051c"
+  "packageManager": "pnpm@9.10.0+sha512.73a29afa36a0d092ece5271de5177ecbf8318d454ecd701343131b8ebc0c1a91c487da46ab77c8e596d6acf1461e3594ced4becedf8921b074fbd8653ed7051c",
+  "pnpm": {
+    "patchedDependencies": {
+      "@mantou/gem": "patches/@mantou__gem.patch"
+    }
+  }
 }
