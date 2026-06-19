@@ -12,6 +12,7 @@
   - Rust 后端：`cargo watch -x run`，默认监听 `127.0.0.1:8787`
   - 前端：`pnpm --dir frontend run dev`，Rspack dev server 默认监听 `127.0.0.1:5173`，并代理 `/api`、`/v1`、`/openai`、`/anthropic` 到 Rust 后端
 - 生产构建：`cargo build --release` 会通过 `build.rs` 调用 `frontend/pnpm run build`，再用 `rust-embed` 将 `frontend/dist` 内嵌进单二进制
+- Docker 镜像发布：`.github/workflows/publish-docker.yml` 在 `v*` tag、release published 或手动触发时，用 GitHub Actions 构建并推送 `linux/amd64` 镜像到 Docker Hub `594mantou/ai-guard`
 - 运行时路由：
   - `/` 和前端静态资源由 Rust 内嵌资源服务
   - `/api/*` 是前端访问后端数据的管理接口
@@ -35,6 +36,7 @@
 
 - `Cargo.toml`：Rust 依赖和 `build.rs` 入口声明
 - `build.rs`：生产构建前端；debug 默认跳过，可用 `AI_GUARD_BUILD_FRONTEND=1` 强制构建
+- `.github/workflows/publish-docker.yml`：Docker Hub 镜像发布，依赖 `DOCKER_USERNAME` 和 `DOCKER_PASSWORD` secrets，目标平台为 `linux/amd64`
 - `src/main.rs`：Axum 服务入口和路由装配
 - `src/api.rs`：管理接口 `/api/*`
 - `src/proxy.rs`：OpenAI/Anthropic 入口转发、上游选择、代理日志
